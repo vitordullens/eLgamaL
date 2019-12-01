@@ -3,9 +3,9 @@ import random
 from typing import Tuple, List
 
 # For more details on the cryptossystem
-DEBUG = True
+DEBUG = False
 
-def miller_rabin(n: int, k=40) -> bool:
+def miller_rabin(n: int, k=40):
     """
     Algoritmo de Miller-Rabin para teste de primos.
     Para mais informações: https://en.wikipedia.org/wiki/Miller%E2%80%93Rabin_primality_test
@@ -31,7 +31,7 @@ def miller_rabin(n: int, k=40) -> bool:
             return False
     return True
 
-def find_prime(length: int) -> int:
+def find_prime(length: int):
     """
     Gera numeros aleatorios de length bits
     e testa cada numero com miller_rabin ate que um seja provavelmente primo.
@@ -100,12 +100,11 @@ def encrypt(public_key: Tuple, message: str):
 def decrypt(private_key, cypher):
     (c1, c2) = cypher
     (x, q, p) = private_key
-    # s = pow(c1, x, p)
-    s_inverse = pow(c1, q - x, p)   # Possivelmente vai dar merda
+    s_inverse = pow(c1, q - x, p) 
     m = list(map(lambda x: str((x * s_inverse)%p), c2))
     return to_string(m)
 
-def break_message(message):
+def separate_chars(message):
     parts = []
     message = list(map(str, message))
     message = "".join(message)
@@ -120,30 +119,36 @@ def break_message(message):
             i += 2
     return list(map(int, parts))
     
+def break_message(message, max_length):
+    if int(message) >= max_length:
+        l = len(message) // 2
+        left = break_message(message[0:l], max_length)
+        right = break_message(message[l:], max_length)
+        ans = []
+        for el in left:
+            ans.append(el)
+        for el in right:
+            ans.append(el)
+        return ans
+    else:
+        return [message]
+
 def to_ascii(message, max_length):
     message = ''.join(str(ord(c)).zfill(3) for c in message)
-    chunks = []
+    chunks = break_message(message, max_length)
     # Quebra a mensagem em chunks menores do que max_length
-    i = 0; j = 1
-    while j < len(message):
-        teste = int(message[i:j])
-        if teste >= max_length:
-            chunks.append(int(message[i:j-1]))
-            i = j
-        j += 1 
-    chunks.append(int(message[i:]))
-    print(("DEBUG - Message in ASCII: " + " ".join(list(map(str, chunks)))) if DEBUG else "")
-    return chunks
+    print(("DEBUG - Message Chunks: " + " ".join(chunks)) if DEBUG else "")
+    return list(map(int, chunks))
 
 def to_string(message):
     message = list(map(str, message))
-    message = break_message(message)
+    message = separate_chars(message)
     message = ''.join(chr(c) for c in message)
     return str(message)
 
 KEY_LENGTH = 256
-MESSAGE = "Tentado uma mensagem Maior"
+MESSAGE = "\"O futuro eh brilhante\" - Gondim"
 (private, public) = generate_key_pair(KEY_LENGTH)
 cypher = encrypt(public, MESSAGE)
 print("Cypher text:", cypher)
-print(decrypt(private, cypher))
+print("PLain text:", decrypt(private, cypher))
