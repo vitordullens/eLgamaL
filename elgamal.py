@@ -3,7 +3,7 @@ import random
 from typing import Tuple, List
 
 # For more details on the cryptossystem
-DEBUG = False
+DEBUG = True
 
 def miller_rabin(n: int, k=40):
     """
@@ -40,14 +40,19 @@ def find_prime(length: int):
     p = 4  # Obviamente não é primo
     q = 2
     # keep testing until one is found
+    min_length_q = 1 << (length-2)
+    max_length_q = 1 << (length-1)
+    count = 0   # Quantidade de numeros testados 
     while(not miller_rabin(p) or not miller_rabin(q)):
         # Gera numero aleatorio de length/2 bits
-        q = random.randint(2**(length-2), 2**(length-1))
+        count += 1
+        q = random.randint(min_length_q, max_length_q)
         # Verifica se o número é impar
         if not (q&1):
             q += 1
         p = 2*q + 1 # Numero de length bits
     print("DEBUG - Prime chosen is {}\nDEBUG - Prime factor {}\n".format(p, q) if DEBUG else "", end="")
+    print("DEBUG - Numeros de tentativas ate encontrar o primo: {}\n".format(count) if DEBUG else "", end="")
     return (p, q)
 
 def find_primitive_root(p: int, q: int):
@@ -145,10 +150,3 @@ def to_string(message):
     message = separate_chars(message)
     message = ''.join(chr(c) for c in message)
     return str(message)
-
-KEY_LENGTH = 256
-MESSAGE = "\"O futuro eh brilhante\" - Gondim"
-(private, public) = generate_key_pair(KEY_LENGTH)
-cypher = encrypt(public, MESSAGE)
-print("Cypher text:", cypher)
-print("PLain text:", decrypt(private, cypher))
