@@ -47,7 +47,7 @@ class Receiver(threading.Thread):
     def run(self):
         # Gera um par de chaves
         start = datetime.now()
-        (private, public) = elgamal.generate_key_pair(256)
+        (private, public) = elgamal.generate_key_pair(512)
         diff = datetime.now() - start
         print("RECEIVER - Time to generate keys: {}s".format(diff))
         self.private_key = private

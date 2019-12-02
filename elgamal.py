@@ -1,4 +1,5 @@
 import math
+import secrets
 import random
 from typing import Tuple, List
 
@@ -24,7 +25,7 @@ def miller_rabin(n: int, k=40):
         if x == 1 or x == n - 1:
             continue
         for _ in range(r - 1):
-            x = pow(x, 2, n)
+            x = (x*x)%n
             if x == n - 1:
                 break
         else:
@@ -40,16 +41,13 @@ def find_prime(length: int):
     p = 4  # Obviamente não é primo
     q = 2
     # keep testing until one is found
-    min_length_q = 1 << (length-2)
-    max_length_q = 1 << (length-1)
     count = 0   # Quantidade de numeros testados 
     while(not miller_rabin(p) or not miller_rabin(q)):
         # Gera numero aleatorio de length/2 bits
         count += 1
-        q = random.randint(min_length_q, max_length_q)
-        # Verifica se o número é impar
-        if not (q&1):
-            q += 1
+        q = secrets.randbits(length - 1)
+        q = q | 1   # Força ele ser ímpar
+        q = q | (1 << length-1)
         p = 2*q + 1 # Numero de length bits
     print("DEBUG - Prime chosen is {}\nDEBUG - Prime factor {}\n".format(p, q) if DEBUG else "", end="")
     print("DEBUG - Numeros de tentativas ate encontrar o primo: {}\n".format(count) if DEBUG else "", end="")
