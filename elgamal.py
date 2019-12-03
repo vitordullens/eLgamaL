@@ -4,7 +4,7 @@ import random
 from typing import Tuple, List
 
 # For more details on the cryptossystem
-DEBUG = True
+DEBUG = False
 
 def miller_rabin(n: int, k=40):
     """
@@ -38,17 +38,24 @@ def find_prime(length: int):
     e testa cada numero com miller_rabin ate que um seja provavelmente primo.
     Buscamos um "safe prime", i.e. um primo P tal que (P-1)/2 seja primo também.
     """
-    p = 4  # Obviamente não é primo
-    q = 2
+    q = 4  # Obviamente não é primo
     # keep testing until one is found
     count = 0   # Quantidade de numeros testados 
-    while(not miller_rabin(p) or not miller_rabin(q)):
+    while(not miller_rabin(q)):
         # Gera numero aleatorio de length/2 bits
         count += 1
         q = secrets.randbits(length - 1)
         q = q | 1   # Força ele ser ímpar
         q = q | (1 << length-1)
-        p = 2*q + 1 # Numero de length bits
+    p = q
+    while(not miller_rabin(q)):
+        # Gera numero aleatorio de length/2 bits
+        count += 1
+        q = secrets.randbits(length - 1)
+        q = q | 1   # Força ele ser ímpar
+        q = q | (1 << length-1)
+    # Novo numero maior que eh a multiplicação dos dois maiores
+    p = p * q
     print("DEBUG - Prime chosen is {}\nDEBUG - Prime factor {}\n".format(p, q) if DEBUG else "", end="")
     print("DEBUG - Numeros de tentativas ate encontrar o primo: {}\n".format(count) if DEBUG else "", end="")
     return (p, q)
@@ -60,13 +67,6 @@ def find_primitive_root(p: int, q: int):
     # One easy way of selecting a random generator is to select a random value ℎ between 2 and 𝑝−1, and compute ℎ^((𝑝−1)/𝑞) mod 𝑝.
     # if that value is not 1 (and with high probability, it won't be), then ℎ^((𝑝−1)/𝑞) mod 𝑝 is your random generator.
     # https://crypto.stackexchange.com/questions/9006/how-to-find-generator-g-in-a-cyclic-group
-
-    # An alternative method of finding a generator 𝑔: 
-    # if you selected a safe prime, and if your safe prime also satisfied the condition 𝑝 = 7 mod 8, 
-    # then the value 𝑔=2 will always be a generator for the group of size 𝑞.
-    if p%8 == 7:
-        print("DEBUG - Generator is {} (special case)\n".format(2) if DEBUG else "", end="")
-        return 2
     while(1):
         g = random.randint( 2, p-1 )
         g = pow(g, (p-1)//q, p)
@@ -93,7 +93,7 @@ def encrypt(public_key: Tuple, message: str):
     Given a public key and a message, encrypts the message.
     """
     (h, root, p, q) = public_key
-    message = to_ascii(message, q)
+    message = to_ascii(message, p)
     y = random.randint(1, q-1)
     s = pow(h, y, p)
     c1 = pow(root, y, p)
